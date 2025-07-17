@@ -4,11 +4,12 @@ Ein fein granulierter API-Proxy mit Transformationen, Delays und Loops - ähnlic
 
 ## Features
 
-### 🎯 Drei Basis-Bausteine
+### 🎯 Vier Basis-Bausteine
 
 1. **Input** - Kontinuierliches Pollen externer APIs
 2. **Transform** - Datenverarbeitung und -transformation
 3. **Output** - Senden von Daten an externe APIs
+4. **Pipe** - Verbindung der Bausteine zu automatisierten Workflows
 
 ### 🔧 Transformationen
 
@@ -19,10 +20,13 @@ Ein fein granulierter API-Proxy mit Transformationen, Delays und Loops - ähnlic
 
 ### ⚡ Erweiterte Features
 
-- Retry-Logik mit konfigurierbaren Delays
-- Template-basierte Datenformatierung
-- Umfangreiche Logging und Monitoring
-- REST API für alle Operationen
+- **Pipeline-Workflows** - Automatische Verbindung von Input → Transform → Output
+- **Delay-Kontrolle** - Konfigurierbare Verzögerungen zwischen Schritten
+- **Retry-Logik** mit konfigurierbaren Delays
+- **Template-basierte Datenformatierung**
+- **Umfangreiche Logging und Monitoring**
+- **REST API für alle Operationen**
+- **Automatische Validierung** von Pipeline-Konfigurationen
 
 ## Installation
 
@@ -153,6 +157,46 @@ POST /output/{id}/test
 DELETE /output/{id}
 ```
 
+### Pipe Management
+
+```bash
+# Pipe hinzufügen
+POST /pipe
+{
+  "id": "weather-alert-pipe",
+  "name": "Weather Alert Pipeline",
+  "description": "Monitors weather and sends alerts when temperature is high",
+  "steps": [
+    { "type": "input", "id": "weather-input", "enabled": true },
+    { "type": "transform", "id": "filter-temp", "delay": 1000, "enabled": true },
+    { "type": "output", "id": "slack-alert", "enabled": true }
+  ],
+  "enabled": true,
+  "timeout": 30000
+}
+
+# Pipes auflisten
+GET /pipe
+
+# Pipe-Konfiguration abrufen
+GET /pipe/{id}
+
+# Pipe-Ausführungen abrufen
+GET /pipe/{id}/executions
+
+# Neueste Ausführung
+GET /pipe/{id}/executions/latest
+
+# Pipe manuell ausführen
+POST /pipe/{id}/execute
+
+# Pipe validieren
+POST /pipe/{id}/validate
+
+# Pipe entfernen
+DELETE /pipe/{id}
+```
+
 ## Transform-Typen
 
 ### Map Transform
@@ -206,6 +250,7 @@ DELETE /output/{id}
 1. **Input konfigurieren** - Wetter-API alle 30 Sekunden abfragen
 2. **Transform hinzufügen** - Nur Temperaturen über 20°C filtern
 3. **Output konfigurieren** - Benachrichtigung an Slack senden
+4. **Pipe erstellen** - Alle Komponenten zu einem automatisierten Workflow verbinden
 
 ```bash
 # 1. Input erstellen
@@ -247,7 +292,22 @@ curl -X POST http://localhost:3000/output \
     "template": "{\"text\": \"🔥 Hot weather alert: ${temp_c}°C in Berlin!\"}",
     "enabled": true
   }'
-```
+
+# 4. Pipe erstellen (verbindet alle Komponenten)
+curl -X POST http://localhost:3000/pipe \
+  -H "Content-Type: application/json" \
+  -d '{
+    "id": "weather-alert-pipe",
+    "name": "Weather Alert Pipeline",
+    "description": "Monitors weather and sends alerts when temperature is high",
+    "steps": [
+      { "type": "input", "id": "weather-input", "enabled": true },
+      { "type": "transform", "id": "hot-weather-filter", "delay": 1000, "enabled": true },
+      { "type": "output", "id": "slack-alert", "enabled": true }
+    ],
+    "enabled": true,
+    "timeout": 30000
+  }'
 
 ## Entwicklung
 

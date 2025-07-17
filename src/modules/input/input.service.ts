@@ -1,6 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import axios from 'axios';
+import { PipeService } from '../pipe/pipe.service';
 
 export interface InputConfig {
   id: string;
@@ -24,6 +25,11 @@ export class InputService {
   private readonly logger = new Logger(InputService.name);
   private inputs: Map<string, InputConfig> = new Map();
   private dataHistory: Map<string, InputData[]> = new Map();
+
+  constructor(
+    @Inject(forwardRef(() => PipeService))
+    private readonly pipeService: PipeService,
+  ) {}
 
   async addInput(config: InputConfig): Promise<void> {
     this.inputs.set(config.id, config);
@@ -77,8 +83,8 @@ export class InputService {
         
         this.logger.log(`Polled ${id}: ${JSON.stringify(response.data).substring(0, 100)}...`);
         
-        // Here we would trigger the transform pipeline
-        // await this.triggerTransform(id, inputData);
+        // Trigger pipes that start with this input
+        await this.pipeService.triggerPipeFromInput(id);
         
       } catch (error) {
         this.logger.error(`Error polling ${id}: ${error.message}`);
